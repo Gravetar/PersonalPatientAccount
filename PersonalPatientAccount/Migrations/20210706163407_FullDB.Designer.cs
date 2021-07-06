@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PersonalPatientAccount.Models;
@@ -10,9 +11,10 @@ using PersonalPatientAccount.Models;
 namespace PersonalPatientAccount.Migrations
 {
     [DbContext(typeof(PatientContext))]
-    partial class PatientContextModelSnapshot : ModelSnapshot
+    [Migration("20210706163407_FullDB")]
+    partial class FullDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,9 +116,6 @@ namespace PersonalPatientAccount.Migrations
                     b.Property<int>("patientid")
                         .HasColumnType("integer");
 
-                    b.Property<string>("type")
-                        .HasColumnType("text");
-
                     b.HasKey("id");
 
                     b.HasIndex("docotorid");
@@ -196,8 +195,8 @@ namespace PersonalPatientAccount.Migrations
                     b.Property<List<int>>("doctorid")
                         .HasColumnType("integer[]");
 
-                    b.Property<string>("time")
-                        .HasColumnType("text");
+                    b.Property<int>("time")
+                        .HasColumnType("integer");
 
                     b.HasKey("id");
 

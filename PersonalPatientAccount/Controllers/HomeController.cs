@@ -108,6 +108,71 @@ namespace PersonalPatientAccount.Controllers
             return Ok(token);
         }
 
+        /// <summary>
+        /// Вывод всех записей амбулаторной карты
+        /// </summary>
+        /// <param name="id">id пациента</param>
+        /// <returns></returns>
+        [HttpGet("GetRecords")]
+        [DisableRequestSizeLimit]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(List<CardView>), 200)]
+        [ProducesResponseType(typeof(Exception), 400)]
+        public IActionResult GetRecords(int id)
+        {
+            var card_view = new List<CardView>();
+            var cards = db.Outpatient_cards.Where(p => p.patientid == id).ToList();
+            foreach (var item in cards)
+            {
+                string _formulation = db.Outpatient_cards.FirstOrDefault(p => p.patientid == item.patientid).formulation;
+                string date = db.Outpatient_cards.FirstOrDefault(p => p.patientid == item.patientid).date;
+                string _type = db.Outpatient_cards.FirstOrDefault(p => p.patientid == item.patientid).type;
+                Doctor doctor = db.Doctors.FirstOrDefault(p => p.id == item.docotorid);
+
+                card_view.Add(new CardView()
+                {
+                    Diagnose = _formulation,
+                    NameDoctor = doctor.name,
+                    SurnameDoctor = doctor.surname,
+                    PatronymicDoctor = doctor.patrynomic,
+                    Date = date,
+                    Type = _type
+                });
+            }
+            return Ok(card_view ?? new List<CardView>());
+        }
+
+        /// <summary>
+        /// Вывод всех записей амбулаторной карты
+        /// </summary>
+        /// <param name="id">id пациента</param>
+        /// <returns></returns>
+        [HttpGet("GetAppointments")]
+        [DisableRequestSizeLimit]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(List<CardView>), 200)]
+        [ProducesResponseType(typeof(Exception), 400)]
+        public IActionResult GetAppointments(int id)
+        {
+            var appointment_view = new List<AppointmentView>();
+            var appointments = db.Appointments.Where(p => p.patientid == id).ToList();
+            foreach (var item in appointments)
+            {
+                string _date = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid).date;
+                string _FIOdoctor = db.Doctors.FirstOrDefault(p => p.id == item.docotorid).FullName;
+                string _time = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid).time;
+                string _office = db.Doctors.FirstOrDefault(p => p.id == item.docotorid).office;
+
+                appointment_view.Add(new AppointmentView()
+                {
+                    date = _date,
+                    FIOdoctor = _FIOdoctor,
+                    time = _time,
+                    office = _office
+                });
+            }
+            return Ok(appointment_view ?? new List<AppointmentView>());
+        }
 
         /// <summary>
         /// Выдача токена по Email и паролю
@@ -160,6 +225,22 @@ namespace PersonalPatientAccount.Controllers
 
             // если пользователя не найдено
             return null;
+        }
+
+        /// <summary>
+        /// Вывод пациента по айди
+        /// </summary>
+        /// <param name="id">id Пациента</param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        [DisableRequestSizeLimit]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Exception), 400)]
+        public Patient GetPatient(int id)
+        {
+            Patient patient = db.Patients.FirstOrDefault(x => x.id == id);
+            return patient;
         }
     }
 }
