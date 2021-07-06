@@ -1,0 +1,29 @@
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Вход</title>
+  <link rel="stylesheet" href="~/css/style.css">
+</head>
+
+<form asp-action="Login" asp-controller="Account" asp-anti-forgery="true">
+  <div class="autorization">
+    <Label class="l_login">Вход</Label>
+    <div class="b_auth">
+      <label class="l_login_inner" asp-for="Email">Введите Email</label><br>
+      <input class="l_login_inner" type="text" asp-for="Email" />
+      <span asp-validation-for="Email" />
+    </div>
+    <div class="b_auth">
+      <label class="l_login_inner" asp-for="Password">Введите пароль</label><br>
+      <input class="l_login_inner" asp-for="Password" />
+      <span asp-validation-for="Password" />
+    </div>
+    <div class="b_auth">
+      <input type="submit" value="Войти" class="b_login" />
+    </div>
+    <div class="b_auth">
+      <a class="l_reg_inner" asp-action="Register" asp-controller="Account">Регистрация</a>
+      <div class="validation" asp-validation-summary="ModelOnly"></div>
+    </div>
+  </div>
+</form>
