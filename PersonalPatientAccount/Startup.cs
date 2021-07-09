@@ -35,6 +35,17 @@ namespace PersonalPatientAccount
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("EnableCORS", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
+
             services.AddControllersWithViews();
             // In production, the Angular files will be served from this directory
 
@@ -80,7 +91,6 @@ namespace PersonalPatientAccount
                     });
 
             services.AddMvc();
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -99,6 +109,8 @@ namespace PersonalPatientAccount
             {
                 app.UseExceptionHandler("/Error");
             }
+            app.UseHttpsRedirection();
+            app.UseCors("EnableCORS");
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
@@ -116,12 +128,11 @@ namespace PersonalPatientAccount
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseHttpsRedirection();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                endpoints.MapDefaultControllerRoute();
             });
 
 
@@ -138,7 +149,6 @@ namespace PersonalPatientAccount
                     spa.UseAngularCliServer(npmScript: "start");
                 }
             });
-
         }
     }
 }

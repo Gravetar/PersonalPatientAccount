@@ -19,6 +19,6 @@ namespace PersonalPatientAccount.Models
         public Doctor Doctor { get; set; }
         [ForeignKey("Patient")]
         public int patientid { get; set; }
-        public Doctor Patient { get; set; }
+        public Patient Patient { get; set; }
     }
 }

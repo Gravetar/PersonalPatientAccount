@@ -7,8 +7,9 @@ namespace PersonalPatientAccount.Models.ModelsView
 {
     public class AppointmentView
     {
+        public string id { get; set; }
         public string date { get; set; }
-        public string FIOdoctor { get; set; }
+        public string fiodoctor { get; set; }
         public string time { get; set; }
         public string office { get; set; }
     }

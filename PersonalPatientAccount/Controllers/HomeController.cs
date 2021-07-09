@@ -33,11 +33,38 @@ namespace PersonalPatientAccount.Controllers
             db = context;
         }
 
+        [HttpPost("EditPatient")]
+        public IActionResult Edit([FromBody] EditModel user)
+        {
+            if (ModelState.IsValid)
+            {
+                string useremail = User.Identity.Name;
+
+                Patient patient = db.Patients.FirstOrDefault(p => p.id == Int32.Parse(user.id));
+
+                patient.surname = user.Surname;
+                patient.name = user.Name;
+                patient.patronymic = user.Patronymic;
+                patient.dateofbirth = user.Dateofbirth;
+                patient.numberpolicy = user.Numberpolicy;
+                patient.numberpassport = user.Numberpassport;
+                patient.email = user.Email;
+                patient.phone = user.Phone;
+
+                db.Entry(patient).State = EntityState.Modified;
+
+                var result = db.SaveChanges();
+                return Ok(result);
+            }
+
+            return BadRequest("Не удалось изменить данные");
+        }
+
         [HttpPost]
         [Route("Register")]
         [AllowAnonymous]
         //POST: api/Patient/Register
-        public async Task<IActionResult> RegisterPatient(Models.ModelsView.RegisterModel model)
+        public IActionResult RegisterPatient([FromBody]Models.ModelsView.RegisterModel model)
         {
             var patient = new Patient
             {
@@ -46,7 +73,7 @@ namespace PersonalPatientAccount.Controllers
                 name = model.Name,
                 surname = model.Surname,
                 patronymic = model.Patronymic,
-                dateofbirth = DateTime.ParseExact(model.Dateofbirth, "yyyy-M-dd", CultureInfo.InvariantCulture),
+                dateofbirth = DateTime.ParseExact(model.Dateofbirth, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 numberpolicy = model.Numberpolicy,
                 numberpassport = model.Numberpassport,
                 phone = model.Phone
@@ -56,7 +83,7 @@ namespace PersonalPatientAccount.Controllers
             try
             {
                 db.Patients.Add(patient);
-                var result = await db.SaveChangesAsync();
+                var result =  db.SaveChanges();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -66,12 +93,12 @@ namespace PersonalPatientAccount.Controllers
         }
 
         /// <summary>
-        /// Возвращает Email текущего пользователя
+        /// Возвращает текущего пользователя
         /// </summary>
         /// <returns></returns>
-        protected string CurrentEmail()
+        protected int CurrentUserId()
         {
-            return User.Identity.Name;
+            return int.Parse(User.Claims.FirstOrDefault(p => p.Type == "Id").Value);
         }
 
         /// <summary>
@@ -79,14 +106,26 @@ namespace PersonalPatientAccount.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("GetUser")]
-        public async Task<Patient> CurrentPatient()
+        [Authorize]
+        public IActionResult CurrentPatient()
         {
-            var emailPatient = CurrentEmail();
-            if (emailPatient == null)
-                return null;
+            string PatientId = User.Claims.First(c => c.Type == "Id").Value;
+            var patient = db.Patients.FirstOrDefault(p => p.id == Int32.Parse(PatientId));
+            var response = new
+            {
+                id = patient.id,
+                name = patient.name,
+                surname = patient.surname,
+                patronymic = patient.patronymic,
+                dateofbirth = patient.dateofbirth.ToString("yyyy-MM-dd"),
+                numberpolicy = patient.numberpolicy,
+                numberpassport = patient.numberpassport,
+                phone = patient.phone,
+                email = patient.email,
+                password = patient.password
+            };
 
-            var patient = await db.Patients.FirstOrDefaultAsync(p => p.email == emailPatient);
-            return patient;
+            return Json(response);
         }
 
         /// <summary>
@@ -95,17 +134,34 @@ namespace PersonalPatientAccount.Controllers
         /// <param name="username">Имя учетной записи (Email)</param>
         /// <param name="password">Пароль учетной записи</param>
         /// <returns>Токен доступа</returns>
-        [HttpGet("Auth")]
+        [HttpPost("Auth")]
         [AllowAnonymous]
-        public IActionResult Login(string username, string password)
+        public IActionResult Login([FromBody] LoginModel user)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-                return StatusCode(400, "Не указан логин и/или пароль");
-            var token = AuthorizePatient(username, password);
-            if (token == null)
-                return BadRequest(new { errorText = "Не правильный логин или пароль." });
+            var identity = GetIdentity(user.Email, user.Password);
+            if (identity == null)
+            {
+                return BadRequest(new { errorText = "Invalid username or password." });
+            }
 
-            return Ok(token);
+            var now = DateTime.UtcNow;
+            // создаем JWT-токен
+            var jwt = new JwtSecurityToken(
+                    issuer: AuthOptions.ISSUER,
+                    audience: AuthOptions.AUDIENCE,
+                    notBefore: now,
+                    claims: identity.Claims,
+                    expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
+                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            var response = new
+            {
+                token = encodedJwt,
+                username = identity.Name
+            };
+
+            return Json(response);
         }
 
         /// <summary>
@@ -118,10 +174,11 @@ namespace PersonalPatientAccount.Controllers
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<CardView>), 200)]
         [ProducesResponseType(typeof(Exception), 400)]
-        public IActionResult GetRecords(int id)
+        public IActionResult GetRecords()
         {
+            int patientid = CurrentUserId();
             var card_view = new List<CardView>();
-            var cards = db.Outpatient_cards.Where(p => p.patientid == id).ToList();
+            var cards = db.Outpatient_cards.Where(p => p.patientid == patientid).ToList();
             foreach (var item in cards)
             {
                 string _formulation = db.Outpatient_cards.FirstOrDefault(p => p.patientid == item.patientid).formulation;
@@ -131,12 +188,12 @@ namespace PersonalPatientAccount.Controllers
 
                 card_view.Add(new CardView()
                 {
-                    Diagnose = _formulation,
-                    NameDoctor = doctor.name,
-                    SurnameDoctor = doctor.surname,
-                    PatronymicDoctor = doctor.patrynomic,
-                    Date = date,
-                    Type = _type
+                    diagnose = _formulation,
+                    namedoctor = doctor.name[0] + ".",
+                    surnamedoctor = doctor.surname,
+                    patronymicdoctor = doctor.patrynomic[0] + ".",
+                    date = date,
+                    type = _type
                 });
             }
             return Ok(card_view ?? new List<CardView>());
@@ -152,21 +209,24 @@ namespace PersonalPatientAccount.Controllers
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<CardView>), 200)]
         [ProducesResponseType(typeof(Exception), 400)]
-        public IActionResult GetAppointments(int id)
+        [Authorize]
+        public IActionResult GetAppointments()
         {
+            int patientid = CurrentUserId();
             var appointment_view = new List<AppointmentView>();
-            var appointments = db.Appointments.Where(p => p.patientid == id).ToList();
+            var appointments = db.Appointments.Where(p => p.patientid == patientid).ToList();
             foreach (var item in appointments)
             {
-                string _date = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid).date;
+                string _date = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid && p.id == item.id).date;
                 string _FIOdoctor = db.Doctors.FirstOrDefault(p => p.id == item.docotorid).FullName;
-                string _time = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid).time;
+                string _time = db.Appointments.FirstOrDefault(p => p.patientid == item.patientid && p.id == item.id).time;
                 string _office = db.Doctors.FirstOrDefault(p => p.id == item.docotorid).office;
 
                 appointment_view.Add(new AppointmentView()
                 {
+                    id = item.id.ToString(),
                     date = _date,
-                    FIOdoctor = _FIOdoctor,
+                    fiodoctor = _FIOdoctor,
                     time = _time,
                     office = _office
                 });
@@ -175,30 +235,22 @@ namespace PersonalPatientAccount.Controllers
         }
 
         /// <summary>
-        /// Выдача токена по Email и паролю
+        /// Удалить запись к врачу у текущего пациента по айди
         /// </summary>
-        /// <param name="username">Email</param>
-        /// <param name="password">Пароль</param>
-        /// <returns>Токен</returns>
-        private Token AuthorizePatient(string username, string password)
+        /// <param name="id">id пациента</param>
+        /// <returns></returns>
+        [HttpDelete("RemoveAppointments/{id}")]
+        [DisableRequestSizeLimit]
+        public IActionResult RemoveAppointments(int id)
         {
-            var identity = GetIdentity(username, password);
-            if (identity == null)
-                return null;
+            Appointment appointment = db.Appointments.FirstOrDefault(a => a.id == id);
+            if (appointment != null)
+            {
+                db.Appointments.Remove(appointment);
+                db.SaveChanges();
+            }
 
-
-            var now = DateTime.UtcNow;
-            // создаем JWT-токен
-            var jwt = new JwtSecurityToken(
-                    issuer: AuthOptions.ISSUER,
-                    audience: AuthOptions.AUDIENCE,
-                    notBefore: now,
-                    claims: identity.Claims,
-                    expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
-                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            return new Token(encodedJwt, identity.Name);
+            return Ok(appointment);
         }
 
         /// <summary>
@@ -241,6 +293,28 @@ namespace PersonalPatientAccount.Controllers
         {
             Patient patient = db.Patients.FirstOrDefault(x => x.id == id);
             return patient;
+        }
+
+        /// <summary>
+        /// Получение социальной информации пациента
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSocialInfo")]
+        [Authorize]
+        public IActionResult GetSocialInfo()
+        {
+            string PatientId = User.Claims.First(c => c.Type == "Id").Value;
+            var patient = db.Patients.FirstOrDefault(p => p.id == Int32.Parse(PatientId));
+            var response = new
+            {
+                patientid = patient.id.ToString(),
+                pationtfio = patient.fullname,
+                age = int.Parse(DateTime.Now.Date.ToString("yyyy")) - int.Parse(patient.dateofbirth.ToString("yyyy")),
+                numberpolicy = patient.numberpolicy,
+                numberpassport = patient.numberpassport
+            };
+
+            return Json(response);
         }
     }
 }
