@@ -19,6 +19,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using System.Web;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using System.Net.Http.Headers;
 
 namespace PersonalPatientAccount.Controllers
 {
@@ -27,10 +31,13 @@ namespace PersonalPatientAccount.Controllers
     [ApiController]
     public class HomeController : Controller
     {
+        IWebHostEnvironment _appEnvironment;
+
         PatientContext db;
-        public HomeController(PatientContext context)
+        public HomeController(PatientContext context, IWebHostEnvironment appEnvironment)
         {
             db = context;
+            _appEnvironment = appEnvironment;
         }
 
         [HttpPost("EditPatient")]
@@ -64,7 +71,7 @@ namespace PersonalPatientAccount.Controllers
         [Route("Register")]
         [AllowAnonymous]
         //POST: api/Patient/Register
-        public IActionResult RegisterPatient([FromBody]Models.ModelsView.RegisterModel model)
+        public IActionResult RegisterPatient([FromBody] Models.ModelsView.RegisterModel model)
         {
             var patient = new Patient
             {
@@ -83,7 +90,7 @@ namespace PersonalPatientAccount.Controllers
             try
             {
                 db.Patients.Add(patient);
-                var result =  db.SaveChanges();
+                var result = db.SaveChanges();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -316,5 +323,38 @@ namespace PersonalPatientAccount.Controllers
 
             return Json(response);
         }
+
+        [HttpPost("UploadImage")]
+        public IActionResult UploadImage()
+        {
+            try
+            {
+                var file = Request.Form.Files[0];
+
+                if (file.Length > 0)
+                {
+                    string fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName;
+                    fileName = CurrentUserId().ToString() +".png";
+                    string fullPath = Path.Combine(_appEnvironment.WebRootPath + "/AccountImages", fileName);
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        file.CopyTo(stream);
+                    }
+                    ImageModel fileUp = new ImageModel {
+                        name = file.FileName, 
+                        path = "/AccountImages/" + fileName,
+                        patientid = CurrentUserId(),
+                    };
+                    db.Images.Add(fileUp);
+                    db.SaveChanges();
+                }
+                return Json("OK");
+            }
+            catch (System.Exception ex)
+            {
+                return Json("Failed");
+            }
+        }
+
     }
 }

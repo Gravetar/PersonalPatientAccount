@@ -14,6 +14,7 @@ namespace PersonalPatientAccount.Models
         public DbSet<Position> Positions { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Shedule> Shedules { get; set; }
+        public DbSet<ImageModel> Images { get; set; }
 
         public PatientContext(DbContextOptions<PatientContext> options)
             : base(options)

@@ -135,6 +135,8 @@ namespace PersonalPatientAccount
                 endpoints.MapDefaultControllerRoute();
             });
 
+            app.UseStaticFiles();
+
 
 
             app.UseSpa(spa =>
