@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace PersonalPatientAccount.Migrations
 {
-    public partial class FullDB : Migration
+    public partial class FullDb : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -23,8 +22,7 @@ namespace PersonalPatientAccount.Migrations
                     numberpolicy = table.Column<string>(type: "text", nullable: true),
                     numberpassport = table.Column<string>(type: "text", nullable: true),
                     email = table.Column<string>(type: "text", nullable: true),
-                    phone = table.Column<string>(type: "text", nullable: true),
-                    photourl = table.Column<string>(type: "text", nullable: true)
+                    phone = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -45,18 +43,24 @@ namespace PersonalPatientAccount.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Shedules",
+                name: "Images",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    dateofweek = table.Column<int>(type: "integer", nullable: false),
-                    time = table.Column<int>(type: "integer", nullable: false),
-                    doctorid = table.Column<List<int>>(type: "integer[]", nullable: true)
+                    name = table.Column<string>(type: "text", nullable: true),
+                    path = table.Column<string>(type: "text", nullable: true),
+                    patientid = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Shedules", x => x.id);
+                    table.PrimaryKey("PK_Images", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Images_Patients_patientid",
+                        column: x => x.patientid,
+                        principalTable: "Patients",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -69,18 +73,17 @@ namespace PersonalPatientAccount.Migrations
                     surname = table.Column<string>(type: "text", nullable: true),
                     patrynomic = table.Column<string>(type: "text", nullable: true),
                     office = table.Column<string>(type: "text", nullable: true),
-                    sheduleid = table.Column<List<int>>(type: "integer[]", nullable: true),
-                    Positionid = table.Column<int>(type: "integer", nullable: true)
+                    positionid = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Doctors", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Doctors_Positions_Positionid",
-                        column: x => x.Positionid,
+                        name: "FK_Doctors_Positions_positionid",
+                        column: x => x.positionid,
                         principalTable: "Positions",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -104,33 +107,9 @@ namespace PersonalPatientAccount.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Appointments_Doctors_patientid",
+                        name: "FK_Appointments_Patients_patientid",
                         column: x => x.patientid,
-                        principalTable: "Doctors",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoctorShedule",
-                columns: table => new
-                {
-                    Doctorid = table.Column<int>(type: "integer", nullable: false),
-                    Sheduleid = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoctorShedule", x => new { x.Doctorid, x.Sheduleid });
-                    table.ForeignKey(
-                        name: "FK_DoctorShedule_Doctors_Doctorid",
-                        column: x => x.Doctorid,
-                        principalTable: "Doctors",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoctorShedule_Shedules_Sheduleid",
-                        column: x => x.Sheduleid,
-                        principalTable: "Shedules",
+                        principalTable: "Patients",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -143,6 +122,7 @@ namespace PersonalPatientAccount.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     formulation = table.Column<string>(type: "text", nullable: true),
                     date = table.Column<string>(type: "text", nullable: true),
+                    type = table.Column<string>(type: "text", nullable: true),
                     docotorid = table.Column<int>(type: "integer", nullable: false),
                     patientid = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -156,8 +136,29 @@ namespace PersonalPatientAccount.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Outpatient_cards_Doctors_patientid",
+                        name: "FK_Outpatient_cards_Patients_patientid",
                         column: x => x.patientid,
+                        principalTable: "Patients",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Shedules",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    dateofweek = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<string>(type: "text", nullable: true),
+                    docotorid = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Shedules", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Shedules_Doctors_docotorid",
+                        column: x => x.docotorid,
                         principalTable: "Doctors",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -174,14 +175,14 @@ namespace PersonalPatientAccount.Migrations
                 column: "patientid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Doctors_Positionid",
+                name: "IX_Doctors_positionid",
                 table: "Doctors",
-                column: "Positionid");
+                column: "positionid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoctorShedule_Sheduleid",
-                table: "DoctorShedule",
-                column: "Sheduleid");
+                name: "IX_Images_patientid",
+                table: "Images",
+                column: "patientid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Outpatient_cards_docotorid",
@@ -192,6 +193,11 @@ namespace PersonalPatientAccount.Migrations
                 name: "IX_Outpatient_cards_patientid",
                 table: "Outpatient_cards",
                 column: "patientid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Shedules_docotorid",
+                table: "Shedules",
+                column: "docotorid");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -200,16 +206,16 @@ namespace PersonalPatientAccount.Migrations
                 name: "Appointments");
 
             migrationBuilder.DropTable(
-                name: "DoctorShedule");
+                name: "Images");
 
             migrationBuilder.DropTable(
                 name: "Outpatient_cards");
 
             migrationBuilder.DropTable(
-                name: "Patients");
+                name: "Shedules");
 
             migrationBuilder.DropTable(
-                name: "Shedules");
+                name: "Patients");
 
             migrationBuilder.DropTable(
                 name: "Doctors");

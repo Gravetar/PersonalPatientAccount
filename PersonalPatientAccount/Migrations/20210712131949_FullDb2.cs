@@ -2,12 +2,12 @@
 
 namespace PersonalPatientAccount.Migrations
 {
-    public partial class FullDB3 : Migration
+    public partial class FullDb2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
-                name: "time",
+                name: "dateofweek",
                 table: "Shedules",
                 type: "text",
                 nullable: true,
@@ -18,7 +18,7 @@ namespace PersonalPatientAccount.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<int>(
-                name: "time",
+                name: "dateofweek",
                 table: "Shedules",
                 type: "integer",
                 nullable: false,

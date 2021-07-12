@@ -324,6 +324,102 @@ namespace PersonalPatientAccount.Controllers
             return Json(response);
         }
 
+
+        /// <summary>
+        /// Получение всех специализаций докторов
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetPositions")]
+        public IActionResult GetPositions()
+        {
+            var position_view = new List<PositionView>();
+            var positions = db.Positions.ToList();
+            foreach (var item in positions)
+            {
+                position_view.Add(new PositionView()
+                {
+                    id = item.id.ToString(),
+                    name = item.name,
+                });
+            }
+            return Ok(position_view ?? new List<PositionView>());
+        }
+
+        /// <summary>
+        /// Получение всех докторов по имени специализации
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetDoctorsByPosition/{name}")]
+        public IActionResult GetDoctorsByPosition(string name)
+        {
+            var doctor_view = new List<DoctorsView>();
+            var doctors = db.Doctors.Where(d => d.positionid == db.Positions.FirstOrDefault(p => p.name == name).id).ToList();
+            foreach (var item in doctors)
+            {
+                doctor_view.Add(new DoctorsView()
+                {
+                    id = item.id.ToString(),
+                    name = item.name,
+                    surname = item.surname,
+                    patronymic = item.patrynomic
+                });
+            }
+            return Ok(doctor_view ?? new List<DoctorsView>());
+        }
+
+        /// <summary>
+        /// Получение свободного времени у доктора по дню
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetFreeTimeDoctor/{id}/{date}")]
+        public IActionResult GetFreeTimeDoctor(string id, DateTime date)
+        {
+            //Получить день недели нужной даты
+            string dayofweek = date.ToString("ddd");
+            List<string> freetime = new List<string>();
+            List<string> nofreetime = new List<string>();
+            List<Shedule> shedules = new List<Shedule>();
+            List<Appointment> appointments = new List<Appointment>();
+
+            //Получить все расписание на этот день, по дню недели
+            shedules = db.Shedules.Where(s => s.dateofweek == dayofweek && s.docotorid == int.Parse(id)).ToList();
+            foreach (Shedule item in shedules)
+            {
+                freetime.Add(item.time);
+            }
+            //Удалить время-занятые(где время и дата схожи)
+            appointments = db.Appointments.Where(a => a.date == date.ToString("yyyy-MM-dd")).ToList();
+            foreach (Appointment item in appointments)
+            {
+                freetime.Remove(item.time);
+            }
+
+            return Ok(freetime);
+        }
+
+        [HttpPost("NewAppointment")]
+        public IActionResult NewAppointment([FromBody] NewAppointmentView appointment)
+        {
+            if (ModelState.IsValid)
+            {
+                string PatientId = User.Claims.First(c => c.Type == "Id").Value;
+
+                Appointment _appointment = new Appointment();
+
+                _appointment.date = appointment.date;
+                _appointment.time = appointment.time;
+                _appointment.docotorid = int.Parse(appointment.doctorid);
+                _appointment.patientid = CurrentUserId();
+
+                db.Appointments.Add(_appointment);
+
+                var result = db.SaveChanges();
+                return Ok(result);
+            }
+
+            return BadRequest("Не удалось добавить данные");
+        }
+
         [HttpPost("UploadImage")]
         public IActionResult UploadImage()
         {
