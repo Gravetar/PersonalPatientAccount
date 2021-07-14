@@ -10,8 +10,8 @@ using PersonalPatientAccount.Models;
 namespace PersonalPatientAccount.Migrations
 {
     [DbContext(typeof(PatientContext))]
-    [Migration("20210712131254_FullDb")]
-    partial class FullDb
+    [Migration("20210714180949_fulldb")]
+    partial class fulldb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -193,8 +193,8 @@ namespace PersonalPatientAccount.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("dateofweek")
-                        .HasColumnType("integer");
+                    b.Property<string>("dateofweek")
+                        .HasColumnType("text");
 
                     b.Property<int>("docotorid")
                         .HasColumnType("integer");

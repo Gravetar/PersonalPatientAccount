@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace PersonalPatientAccount.Migrations
 {
-    public partial class FullDb : Migration
+    public partial class fulldb : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -149,7 +149,7 @@ namespace PersonalPatientAccount.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    dateofweek = table.Column<int>(type: "integer", nullable: false),
+                    dateofweek = table.Column<string>(type: "text", nullable: true),
                     time = table.Column<string>(type: "text", nullable: true),
                     docotorid = table.Column<int>(type: "integer", nullable: false)
                 },

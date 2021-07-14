@@ -23,6 +23,7 @@ namespace PersonalPatientAccount
                 try
                 {
                     var context = services.GetRequiredService<PatientContext>();
+                    InitDB.Initialize(context);
                 }
                 catch (Exception ex)
                 {
