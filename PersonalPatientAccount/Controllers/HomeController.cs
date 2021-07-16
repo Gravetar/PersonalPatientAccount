@@ -136,10 +136,10 @@ namespace PersonalPatientAccount.Controllers
         }
 
         /// <summary>
-        /// Получение текущего пользователя
+        /// Проверка существует ли пользователь с указанным email
         /// </summary>
         /// <returns></returns>
-        [HttpGet("CheckEmail{email}")]
+        [HttpGet("CheckEmail/{email}")]
         public IActionResult CheckEmail(string email)
         {
             var _email = db.Patients.FirstOrDefault(p => p.email == email);
