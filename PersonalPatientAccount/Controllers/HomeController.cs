@@ -136,6 +136,18 @@ namespace PersonalPatientAccount.Controllers
         }
 
         /// <summary>
+        /// Получение текущего пользователя
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("CheckEmail{email}")]
+        public IActionResult CheckEmail(string email)
+        {
+            var _email = db.Patients.FirstOrDefault(p => p.email == email);
+            if (_email != null) return BadRequest("Пользователь с таким именем уже зарегестрирован");
+            else return Ok();
+        }
+
+        /// <summary>
         /// Получение токена доступа (Авторизация)
         /// </summary>
         /// <param name="username">Имя учетной записи (Email)</param>
@@ -361,7 +373,8 @@ namespace PersonalPatientAccount.Controllers
                     id = item.id.ToString(),
                     name = item.name,
                     surname = item.surname,
-                    patronymic = item.patrynomic
+                    patronymic = item.patrynomic,
+                    office = item.office
                 });
             }
             return Ok(doctor_view ?? new List<DoctorsView>());

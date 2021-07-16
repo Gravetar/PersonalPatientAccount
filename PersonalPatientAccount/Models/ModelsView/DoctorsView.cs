@@ -11,6 +11,7 @@ namespace PersonalPatientAccount.Models.ModelsView
         public string name { get; set; }
         public string surname { get; set; }
         public string patronymic { get; set; }
+        public string office { get; set; }
         public string fullname { get => $"{surname} {name} {patronymic}"; }
     }
 }
